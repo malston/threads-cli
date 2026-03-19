@@ -59,6 +59,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	since, _ := cmd.Flags().GetInt64("since")
 	until, _ := cmd.Flags().GetInt64("until")
 
+	if err := validateSearchFlags(sort, mode, mediaType, since, until); err != nil {
+		return err
+	}
+
 	var filters *threads.SearchFilters
 	if author != "" || sort != "" || mode != "" || mediaType != "" || since != 0 || until != 0 {
 		filters = &threads.SearchFilters{
@@ -81,6 +85,22 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return output.Print(cmd.OutOrStdout(), list.Data, format)
+}
+
+func validateSearchFlags(sort, mode, mediaType string, since, until int64) error {
+	if sort != "" && sort != "top" && sort != "recent" {
+		return fmt.Errorf("invalid --sort %q: must be top or recent", sort)
+	}
+	if mode != "" && mode != "keyword" && mode != "tag" {
+		return fmt.Errorf("invalid --mode %q: must be keyword or tag", mode)
+	}
+	if mediaType != "" && mediaType != "text" && mediaType != "image" && mediaType != "video" {
+		return fmt.Errorf("invalid --media-type %q: must be text, image, or video", mediaType)
+	}
+	if since != 0 && until != 0 && since > until {
+		return fmt.Errorf("--since (%d) must not be after --until (%d)", since, until)
+	}
+	return nil
 }
 
 // loadSearchClient creates an API client pointing at searchBaseURL.
