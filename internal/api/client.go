@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Client handles HTTP communication with the Threads API.
@@ -18,7 +19,7 @@ type Client struct {
 func NewClient(token string) *Client {
 	return &Client{
 		baseURL:    "https://graph.threads.net",
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: 30 * time.Second},
 		token:      token,
 	}
 }

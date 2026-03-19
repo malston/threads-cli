@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,7 +50,8 @@ func ExchangeCode(ctx context.Context, httpClient *http.Client, baseURL, appID, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("token exchange failed with status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("token exchange failed (HTTP %d): %s", resp.StatusCode, string(body))
 	}
 
 	var result exchangeCodeResponse
@@ -103,7 +105,8 @@ func doLongLivedRequest(httpClient *http.Client, req *http.Request) (*config.Cre
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("token request failed with status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("token request failed (HTTP %d): %s", resp.StatusCode, string(body))
 	}
 
 	var result longLivedResponse

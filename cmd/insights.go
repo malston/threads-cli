@@ -11,7 +11,7 @@ import (
 )
 
 // insightsBaseURL is the Threads API base URL for insights operations.
-// Tests override this to point at an httptest server.
+
 var insightsBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -54,7 +54,11 @@ func runInsightsPost(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("fetching post insights: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), data, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), data, format)
 }
 
 func runInsightsUser(cmd *cobra.Command, _ []string) error {
@@ -79,7 +83,11 @@ func runInsightsUser(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("fetching user insights: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), data, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), data, format)
 }
 
 // loadInsightsClient creates an API client pointing at insightsBaseURL.

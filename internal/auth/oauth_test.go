@@ -125,6 +125,96 @@ func TestStartCallbackServer(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects mismatched state parameter", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0, "expected-state")
+		defer shutdown()
+
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=some_code&state=wrong-state", port)
+		resp, err := tlsClient().Get(callbackURL)
+		if err != nil {
+			t.Fatalf("GET failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusBadRequest)
+		}
+
+		select {
+		case <-codeChan:
+			t.Fatal("received code on codeChan, expected error")
+		case err := <-errChan:
+			if err == nil {
+				t.Fatal("expected non-nil error on errChan")
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for error")
+		}
+	})
+
+	t.Run("rejects callback with error parameter", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0, "test-state")
+		defer shutdown()
+
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?error=access_denied&error_description=User+denied&state=test-state", port)
+		resp, err := tlsClient().Get(callbackURL)
+		if err != nil {
+			t.Fatalf("GET failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusBadRequest)
+		}
+
+		select {
+		case <-codeChan:
+			t.Fatal("received code on codeChan, expected error")
+		case err := <-errChan:
+			if err == nil {
+				t.Fatal("expected non-nil error on errChan")
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for error")
+		}
+	})
+
+	t.Run("rejects callback with empty code", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0, "test-state")
+		defer shutdown()
+
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?state=test-state", port)
+		resp, err := tlsClient().Get(callbackURL)
+		if err != nil {
+			t.Fatalf("GET failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusBadRequest)
+		}
+
+		select {
+		case <-codeChan:
+			t.Fatal("received code on codeChan, expected error")
+		case err := <-errChan:
+			if err == nil {
+				t.Fatal("expected non-nil error on errChan")
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for error")
+		}
+	})
+
 	t.Run("context cancellation shuts down server", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 

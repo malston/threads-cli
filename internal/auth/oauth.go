@@ -66,8 +66,24 @@ func StartCallbackServer(ctx context.Context, listenPort int, expectedState stri
 			return
 		}
 
+		if errMsg := r.URL.Query().Get("error"); errMsg != "" {
+			desc := r.URL.Query().Get("error_description")
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "<html><body><h1>Authorization denied: %s</h1></body></html>", errMsg)
+			errs <- fmt.Errorf("authorization denied: %s: %s", errMsg, desc)
+			return
+		}
+
 		authCode := r.URL.Query().Get("code")
 		authCode = strings.TrimSuffix(authCode, "#_")
+		if authCode == "" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "<html><body><h1>Authorization failed: no code received.</h1></body></html>")
+			errs <- fmt.Errorf("callback received no authorization code")
+			return
+		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		fmt.Fprint(w, "<html><body><h1>Authorization successful! You can close this window.</h1></body></html>")

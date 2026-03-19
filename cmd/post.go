@@ -14,7 +14,7 @@ import (
 )
 
 // apiBaseURL is the Threads API base URL for post operations.
-// Tests override this to point at an httptest server.
+
 var apiBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -148,7 +148,11 @@ func runPostGet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("getting post: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), post, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), post, format)
 }
 
 func runPostList(cmd *cobra.Command, _ []string) error {
@@ -179,7 +183,11 @@ func runPostList(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("listing posts: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), list.Data, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), list.Data, format)
 }
 
 func runPostDelete(cmd *cobra.Command, args []string) error {

@@ -34,6 +34,9 @@ func ParseFormat(s string) (Format, error) {
 
 // Print renders data to the writer in the specified format.
 func Print(w io.Writer, data any, format Format) error {
+	if data == nil {
+		return nil
+	}
 	switch format {
 	case JSON:
 		return printJSON(w, data)

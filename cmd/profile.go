@@ -11,7 +11,7 @@ import (
 )
 
 // profileBaseURL is the Threads API base URL for profile operations.
-// Tests override this to point at an httptest server.
+
 var profileBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -50,7 +50,11 @@ func runProfile(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	return output.Print(cmd.OutOrStdout(), profile, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), profile, format)
 }
 
 // loadProfileClient creates an API client pointing at profileBaseURL.

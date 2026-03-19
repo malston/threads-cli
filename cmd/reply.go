@@ -11,7 +11,7 @@ import (
 )
 
 // replyBaseURL is the Threads API base URL for reply operations.
-// Tests override this to point at an httptest server.
+
 var replyBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -76,7 +76,11 @@ func runReplyList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("listing replies: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), list.Data, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), list.Data, format)
 }
 
 func runReplyCreate(cmd *cobra.Command, args []string) error {

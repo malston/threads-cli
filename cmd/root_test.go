@@ -109,7 +109,10 @@ func TestGetFormatValidStrings(t *testing.T) {
 			cmd := newTestCmd()
 			cmd.Flags().Set("format", tt.input)
 
-			got := getFormat(cmd)
+			got, err := getFormat(cmd)
+			if err != nil {
+				t.Fatalf("getFormat() returned error: %v", err)
+			}
 			if got != tt.want {
 				t.Errorf("getFormat() = %v, want %v", got, tt.want)
 			}
@@ -121,7 +124,10 @@ func TestGetFormatDefaultsToText(t *testing.T) {
 	cmd := newTestCmd()
 	// format flag not set, defaults to "text"
 
-	got := getFormat(cmd)
+	got, err := getFormat(cmd)
+	if err != nil {
+		t.Fatalf("getFormat() returned error: %v", err)
+	}
 	if got != output.Text {
 		t.Errorf("getFormat() = %v, want %v", got, output.Text)
 	}

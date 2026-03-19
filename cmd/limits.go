@@ -11,7 +11,7 @@ import (
 )
 
 // limitsBaseURL is the Threads API base URL for rate limit operations.
-// Tests override this to point at an httptest server.
+
 var limitsBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -41,7 +41,11 @@ func runLimits(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("fetching rate limits: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), status, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), status, format)
 }
 
 // loadLimitsClient creates an API client pointing at limitsBaseURL.

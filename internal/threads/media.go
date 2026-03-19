@@ -75,30 +75,33 @@ func CreateCarousel(ctx context.Context, client *api.Client, userID string, item
 	return parseID(resp)
 }
 
-// CheckStatus returns the processing status of a media container.
-func CheckStatus(ctx context.Context, client *api.Client, containerID string) (string, error) {
+// ContainerStatus holds the status and optional error message from a container check.
+type ContainerStatus struct {
+	Status       string `json:"status"`
+	ErrorMessage string `json:"error_message"`
+}
+
+// CheckStatus retrieves the current status of a media container.
+func CheckStatus(ctx context.Context, client *api.Client, containerID string) (*ContainerStatus, error) {
 	params := url.Values{}
 	params.Set("fields", "status,error_message")
 
 	resp, err := client.Get(ctx, fmt.Sprintf("/%s", containerID), params)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", api.ParseError(resp)
+		return nil, api.ParseError(resp)
 	}
 
-	var result struct {
-		Status       string `json:"status"`
-		ErrorMessage string `json:"error_message"`
-	}
+	var result ContainerStatus
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("parsing status response: %w", err)
+		return nil, fmt.Errorf("parsing status response: %w", err)
 	}
 
-	return result.Status, nil
+	return &result, nil
 }
 
 // WaitForReady polls CheckStatus until the container reaches FINISHED status.
@@ -111,16 +114,19 @@ func WaitForReady(ctx context.Context, client *api.Client, containerID string, p
 	defer ticker.Stop()
 
 	for {
-		status, err := CheckStatus(ctx, client, containerID)
+		cs, err := CheckStatus(ctx, client, containerID)
 		if err != nil {
 			return err
 		}
 
-		switch status {
+		switch cs.Status {
 		case "FINISHED":
 			return nil
 		case "ERROR":
-			return fetchContainerError(ctx, client, containerID)
+			if cs.ErrorMessage != "" {
+				return fmt.Errorf("container error: %s", cs.ErrorMessage)
+			}
+			return fmt.Errorf("container error: unknown")
 		}
 
 		select {
@@ -131,33 +137,4 @@ func WaitForReady(ctx context.Context, client *api.Client, containerID string, p
 		case <-ticker.C:
 		}
 	}
-}
-
-// fetchContainerError retrieves the error_message from a container in ERROR status.
-func fetchContainerError(ctx context.Context, client *api.Client, containerID string) error {
-	params := url.Values{}
-	params.Set("fields", "status,error_message")
-
-	resp, err := client.Get(ctx, fmt.Sprintf("/%s", containerID), params)
-	if err != nil {
-		return fmt.Errorf("container error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return api.ParseError(resp)
-	}
-
-	var result struct {
-		Status       string `json:"status"`
-		ErrorMessage string `json:"error_message"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Errorf("container error (decode failed: %w)", err)
-	}
-
-	if result.ErrorMessage != "" {
-		return fmt.Errorf("container error: %s", result.ErrorMessage)
-	}
-	return fmt.Errorf("container error: unknown")
 }

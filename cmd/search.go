@@ -11,7 +11,7 @@ import (
 )
 
 // searchBaseURL is the Threads API base URL for search operations.
-// Tests override this to point at an httptest server.
+
 var searchBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -51,7 +51,11 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("searching posts: %w", err)
 	}
 
-	return output.Print(cmd.OutOrStdout(), list.Data, getFormat(cmd))
+	format, err := getFormat(cmd)
+	if err != nil {
+		return err
+	}
+	return output.Print(cmd.OutOrStdout(), list.Data, format)
 }
 
 // loadSearchClient creates an API client pointing at searchBaseURL.

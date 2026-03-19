@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -15,7 +16,6 @@ var (
 	BuildTime string
 
 	// configDir is the directory used to load stored credentials.
-	// Tests override this to use a temporary directory.
 	configDir = config.DefaultConfigDir()
 )
 
@@ -58,15 +58,18 @@ func resolveToken(cmd *cobra.Command) (string, error) {
 
 	store := config.NewStore(configDir)
 	creds, err := store.Load()
-	if err == nil && creds.AccessToken != "" {
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", fmt.Errorf("reading stored credentials: %w", err)
+		}
+	} else if creds.AccessToken != "" {
 		return creds.AccessToken, nil
 	}
 
 	return "", fmt.Errorf("no access token: set --token, THREADS_ACCESS_TOKEN, or run 'threads auth login'")
 }
 
-// loadClient creates an API client using the first available token source:
-// --token flag, THREADS_ACCESS_TOKEN env var, or stored credentials.
+// loadClient creates an API client with a token resolved via resolveToken.
 func loadClient(cmd *cobra.Command) (*api.Client, error) {
 	token, err := resolveToken(cmd)
 	if err != nil {
@@ -76,12 +79,7 @@ func loadClient(cmd *cobra.Command) (*api.Client, error) {
 }
 
 // getFormat reads the --format flag and parses it into an output.Format.
-// Defaults to output.Text if the flag value is unrecognized.
-func getFormat(cmd *cobra.Command) output.Format {
+func getFormat(cmd *cobra.Command) (output.Format, error) {
 	s, _ := cmd.Flags().GetString("format")
-	f, err := output.ParseFormat(s)
-	if err != nil {
-		return output.Text
-	}
-	return f
+	return output.ParseFormat(s)
 }

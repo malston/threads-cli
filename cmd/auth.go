@@ -15,7 +15,7 @@ import (
 )
 
 // authBaseURL is the Threads API base URL for token operations.
-// Tests override this to point at an httptest server.
+
 var authBaseURL = "https://graph.threads.net"
 
 func init() {
@@ -105,6 +105,9 @@ func runAuthToken(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("no stored credentials: run 'threads auth login' first")
 	}
+	if creds.AccessToken == "" {
+		return fmt.Errorf("stored credentials have no access token: run 'threads auth login'")
+	}
 
 	refresh, _ := cmd.Flags().GetBool("refresh")
 
@@ -147,8 +150,11 @@ func runAuthToken(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-// maskToken shows the first few characters of a token followed by "...".
+// maskToken reveals at most 6 characters (or half the token for short tokens).
 func maskToken(token string) string {
+	if token == "" {
+		return "..."
+	}
 	visible := len(token) / 2
 	if visible > 6 {
 		visible = 6

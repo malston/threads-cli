@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,10 +25,11 @@ type Store struct {
 const credentialsFile = "credentials.json"
 
 // DefaultConfigDir returns the default configuration directory (~/.threads-cli).
+// Panics if the home directory cannot be determined.
 func DefaultConfigDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".threads-cli")
+		panic(fmt.Sprintf("cannot determine home directory: %v", err))
 	}
 	return filepath.Join(home, ".threads-cli")
 }

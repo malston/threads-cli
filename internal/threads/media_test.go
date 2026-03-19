@@ -149,8 +149,8 @@ func TestCheckStatus(t *testing.T) {
 	if gotQuery.Get("fields") != "status,error_message" {
 		t.Errorf("fields = %q, want %q", gotQuery.Get("fields"), "status,error_message")
 	}
-	if status != "FINISHED" {
-		t.Errorf("status = %q, want %q", status, "FINISHED")
+	if status.Status != "FINISHED" {
+		t.Errorf("status = %q, want %q", status.Status, "FINISHED")
 	}
 }
 
@@ -169,8 +169,11 @@ func TestCheckStatusWithError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CheckStatus returned error: %v", err)
 	}
-	if status != "ERROR" {
-		t.Errorf("status = %q, want %q", status, "ERROR")
+	if status.Status != "ERROR" {
+		t.Errorf("status = %q, want %q", status.Status, "ERROR")
+	}
+	if status.ErrorMessage != "video too long" {
+		t.Errorf("error_message = %q, want %q", status.ErrorMessage, "video too long")
 	}
 }
 
