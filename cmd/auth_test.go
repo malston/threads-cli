@@ -273,6 +273,67 @@ func TestRunAuthLoginMissingEnvVars(t *testing.T) {
 	}
 }
 
+func TestSaveTokenCommandRegistered(t *testing.T) {
+	cmd, _, err := rootCmd.Find([]string{"auth", "save-token"})
+	if err != nil {
+		t.Fatalf("save-token command not found: %v", err)
+	}
+	if cmd.Use != "save-token [token]" {
+		t.Errorf("command Use = %q, want %q", cmd.Use, "save-token [token]")
+	}
+}
+
+func TestSaveTokenStoresCredentials(t *testing.T) {
+	// Mock the profile endpoint to return a user ID
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-access-token" {
+			t.Errorf("expected Authorization header with token")
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"id":       "12345",
+			"username": "testuser",
+		})
+	}))
+	defer ts.Close()
+
+	origDir := configDir
+	tmpDir := t.TempDir()
+	configDir = tmpDir
+	t.Cleanup(func() { configDir = origDir })
+
+	origBase := authBaseURL
+	authBaseURL = ts.URL
+	t.Cleanup(func() { authBaseURL = origBase })
+
+	cmd := rootCmd
+	cmd.SetArgs([]string{"auth", "save-token", "test-access-token"})
+	out := &strings.Builder{}
+	cmd.SetOut(out)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+
+	// Verify credentials were saved
+	store := config.NewStore(tmpDir)
+	creds, err := store.Load()
+	if err != nil {
+		t.Fatalf("loading saved credentials: %v", err)
+	}
+	if creds.AccessToken != "test-access-token" {
+		t.Errorf("AccessToken = %q, want %q", creds.AccessToken, "test-access-token")
+	}
+	if creds.UserID != "12345" {
+		t.Errorf("UserID = %q, want %q", creds.UserID, "12345")
+	}
+
+	output := out.String()
+	if !strings.Contains(output, "testuser") {
+		t.Errorf("output should mention username, got: %s", output)
+	}
+}
+
 func TestMaskToken(t *testing.T) {
 	tests := []struct {
 		input string

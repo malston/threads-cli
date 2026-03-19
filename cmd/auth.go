@@ -9,8 +9,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/malston/threads-cli/internal/api"
 	"github.com/malston/threads-cli/internal/auth"
 	"github.com/malston/threads-cli/internal/config"
+	"github.com/malston/threads-cli/internal/threads"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +37,15 @@ func init() {
 	}
 	tokenCmd.Flags().Bool("refresh", false, "refresh the token if needed")
 
-	authCmd.AddCommand(loginCmd, tokenCmd)
+	saveTokenCmd := &cobra.Command{
+		Use:   "save-token [token]",
+		Short: "Save an access token without OAuth",
+		Long:  "Save a manually generated access token. Fetches your user ID from the API and stores credentials locally.",
+		Args:  cobra.ExactArgs(1),
+		RunE:  runSaveToken,
+	}
+
+	authCmd.AddCommand(loginCmd, tokenCmd, saveTokenCmd)
 	rootCmd.AddCommand(authCmd)
 }
 
@@ -96,6 +106,32 @@ func runAuthLogin(cmd *cobra.Command, _ []string) error {
 	}
 
 	fmt.Fprintln(cmd.OutOrStdout(), "Authentication successful! Credentials saved.")
+	return nil
+}
+
+func runSaveToken(cmd *cobra.Command, args []string) error {
+	token := args[0]
+	ctx := cmd.Context()
+
+	client := api.NewClientWithHTTP(token, authBaseURL, &http.Client{Timeout: 30 * time.Second})
+
+	profile, err := threads.GetProfile(ctx, client, "me")
+	if err != nil {
+		return fmt.Errorf("verifying token: %w", err)
+	}
+
+	creds := &config.Credentials{
+		AccessToken: token,
+		TokenType:   "bearer",
+		UserID:      profile.ID,
+	}
+
+	store := config.NewStore(configDir)
+	if err := store.Save(creds); err != nil {
+		return fmt.Errorf("saving credentials: %w", err)
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "Token saved for @%s (user ID: %s)\n", profile.Username, profile.ID)
 	return nil
 }
 
