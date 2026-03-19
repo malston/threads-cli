@@ -24,6 +24,12 @@ func init() {
 	searchCmd.Flags().Int("limit", 25, "max results")
 	searchCmd.Flags().String("before", "", "cursor")
 	searchCmd.Flags().String("after", "", "cursor")
+	searchCmd.Flags().String("author", "", "filter by author username")
+	searchCmd.Flags().String("sort", "", "sort order: top or recent")
+	searchCmd.Flags().String("mode", "", "search mode: keyword or tag")
+	searchCmd.Flags().String("media-type", "", "filter by media type: text, image, or video")
+	searchCmd.Flags().Int64("since", 0, "results after this unix timestamp")
+	searchCmd.Flags().Int64("until", 0, "results before this unix timestamp")
 	rootCmd.AddCommand(searchCmd)
 }
 
@@ -46,7 +52,26 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		After:  after,
 	}
 
-	list, err := threads.Search(ctx, client, query, page)
+	author, _ := cmd.Flags().GetString("author")
+	sort, _ := cmd.Flags().GetString("sort")
+	mode, _ := cmd.Flags().GetString("mode")
+	mediaType, _ := cmd.Flags().GetString("media-type")
+	since, _ := cmd.Flags().GetInt64("since")
+	until, _ := cmd.Flags().GetInt64("until")
+
+	var filters *threads.SearchFilters
+	if author != "" || sort != "" || mode != "" || mediaType != "" || since != 0 || until != 0 {
+		filters = &threads.SearchFilters{
+			Author:    author,
+			SortBy:    sort,
+			Mode:      mode,
+			MediaType: mediaType,
+			Since:     since,
+			Until:     until,
+		}
+	}
+
+	list, err := threads.Search(ctx, client, query, page, filters)
 	if err != nil {
 		return fmt.Errorf("searching posts: %w", err)
 	}

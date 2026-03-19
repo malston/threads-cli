@@ -236,6 +236,7 @@ func TestDefaultScopes(t *testing.T) {
 	expected := []string{
 		"threads_basic",
 		"threads_content_publish",
+		"threads_keyword_search",
 		"threads_manage_insights",
 		"threads_manage_replies",
 		"threads_read_replies",

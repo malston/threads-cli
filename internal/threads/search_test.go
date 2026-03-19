@@ -27,7 +27,7 @@ func TestSearchSendsCorrectRequest(t *testing.T) {
 	defer srv.Close()
 
 	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
-	_, err := Search(context.Background(), client, "golang", nil)
+	_, err := Search(context.Background(), client, "golang", nil, nil)
 	if err != nil {
 		t.Fatalf("Search returned error: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestSearchAppliesPagination(t *testing.T) {
 
 	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
 	page := &api.PageParams{Limit: 25, After: "cursor-abc"}
-	_, err := Search(context.Background(), client, "test", page)
+	_, err := Search(context.Background(), client, "test", page, nil)
 	if err != nil {
 		t.Fatalf("Search returned error: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestSearchParsesPostListWithPaging(t *testing.T) {
 	defer srv.Close()
 
 	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
-	list, err := Search(context.Background(), client, "result", nil)
+	list, err := Search(context.Background(), client, "result", nil, nil)
 	if err != nil {
 		t.Fatalf("Search returned error: %v", err)
 	}
@@ -128,6 +128,109 @@ func TestSearchParsesPostListWithPaging(t *testing.T) {
 	}
 }
 
+func TestSearchAppliesFilters(t *testing.T) {
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	filters := &SearchFilters{
+		Author:    "someuser",
+		SortBy:    "recent",
+		MediaType: "image",
+		Since:     1700000000,
+		Until:     1700086400,
+	}
+	_, err := Search(context.Background(), client, "topic", nil, filters)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotQuery.Get("author_username") != "someuser" {
+		t.Errorf("author_username = %q, want %q", gotQuery.Get("author_username"), "someuser")
+	}
+	if gotQuery.Get("search_type") != "RECENT" {
+		t.Errorf("search_type = %q, want %q", gotQuery.Get("search_type"), "RECENT")
+	}
+	if gotQuery.Get("media_type") != "IMAGE" {
+		t.Errorf("media_type = %q, want %q", gotQuery.Get("media_type"), "IMAGE")
+	}
+	if gotQuery.Get("since") != "1700000000" {
+		t.Errorf("since = %q, want %q", gotQuery.Get("since"), "1700000000")
+	}
+	if gotQuery.Get("until") != "1700086400" {
+		t.Errorf("until = %q, want %q", gotQuery.Get("until"), "1700086400")
+	}
+}
+
+func TestSearchWithNilFilters(t *testing.T) {
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	_, err := Search(context.Background(), client, "test", nil, nil)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotQuery.Get("author_username") != "" {
+		t.Errorf("author_username should be absent, got %q", gotQuery.Get("author_username"))
+	}
+	if gotQuery.Get("search_type") != "" {
+		t.Errorf("search_type should be absent, got %q", gotQuery.Get("search_type"))
+	}
+}
+
+func TestSearchWithPartialFilters(t *testing.T) {
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	filters := &SearchFilters{
+		Author: "alice",
+	}
+	_, err := Search(context.Background(), client, "hello", nil, filters)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotQuery.Get("author_username") != "alice" {
+		t.Errorf("author_username = %q, want %q", gotQuery.Get("author_username"), "alice")
+	}
+	if gotQuery.Get("search_type") != "" {
+		t.Errorf("search_type should be absent, got %q", gotQuery.Get("search_type"))
+	}
+	if gotQuery.Get("media_type") != "" {
+		t.Errorf("media_type should be absent, got %q", gotQuery.Get("media_type"))
+	}
+	if gotQuery.Get("since") != "" {
+		t.Errorf("since should be absent, got %q", gotQuery.Get("since"))
+	}
+}
+
 func TestSearchReturnsErrorOnNon200(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -142,7 +245,7 @@ func TestSearchReturnsErrorOnNon200(t *testing.T) {
 	defer srv.Close()
 
 	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
-	_, err := Search(context.Background(), client, "bad", nil)
+	_, err := Search(context.Background(), client, "bad", nil, nil)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -161,7 +264,7 @@ func TestSearchWithEmptyQuery(t *testing.T) {
 	defer srv.Close()
 
 	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
-	_, err := Search(context.Background(), client, "", nil)
+	_, err := Search(context.Background(), client, "", nil, nil)
 	if err != nil {
 		t.Fatalf("Search returned error: %v", err)
 	}

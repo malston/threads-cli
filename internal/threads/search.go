@@ -5,17 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/malston/threads-cli/internal/api"
 )
 
-// Search finds posts matching a keyword query.
-func Search(ctx context.Context, client *api.Client, query string, page *api.PageParams) (*PostList, error) {
+// SearchFilters holds optional filter parameters for keyword search.
+type SearchFilters struct {
+	Author    string // Filter by author username
+	SortBy    string // "top" or "recent" (maps to search_type)
+	Mode      string // "keyword" or "tag" (maps to search_mode)
+	MediaType string // "text", "image", or "video"
+	Since     int64  // Unix timestamp for start of date range
+	Until     int64  // Unix timestamp for end of date range
+}
+
+// Search finds posts matching a keyword query with optional filters.
+func Search(ctx context.Context, client *api.Client, query string, page *api.PageParams, filters *SearchFilters) (*PostList, error) {
 	params := url.Values{}
 	params.Set("q", query)
 	params.Set("fields", strings.Join(defaultFields, ","))
 	api.ApplyPaging(params, page)
+	applySearchFilters(params, filters)
 
 	resp, err := client.Get(ctx, "/keyword_search", params)
 	if err != nil {
@@ -45,4 +57,28 @@ func Search(ctx context.Context, client *api.Client, query string, page *api.Pag
 	}
 
 	return list, nil
+}
+
+func applySearchFilters(params url.Values, f *SearchFilters) {
+	if f == nil {
+		return
+	}
+	if f.Author != "" {
+		params.Set("author_username", f.Author)
+	}
+	if f.SortBy != "" {
+		params.Set("search_type", strings.ToUpper(f.SortBy))
+	}
+	if f.Mode != "" {
+		params.Set("search_mode", strings.ToUpper(f.Mode))
+	}
+	if f.MediaType != "" {
+		params.Set("media_type", strings.ToUpper(f.MediaType))
+	}
+	if f.Since != 0 {
+		params.Set("since", strconv.FormatInt(f.Since, 10))
+	}
+	if f.Until != 0 {
+		params.Set("until", strconv.FormatInt(f.Until, 10))
+	}
 }

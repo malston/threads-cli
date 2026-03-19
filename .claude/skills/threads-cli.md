@@ -60,8 +60,11 @@ threads reply unhide 67890                  # Unhide a reply
 ### Search
 
 ```bash
-threads search "trending topic"                     # Search posts
-threads search "query" --limit 50 --after CURSOR    # With pagination
+threads search "trending topic"                          # Search posts
+threads search "query" --limit 50 --after CURSOR         # With pagination
+threads search "topic" --author someuser --sort recent   # By author, most recent
+threads search "photo" --media-type image                # Filter by media type
+threads search "event" --since 1700000000 --until 1700086400  # Date range
 ```
 
 ### Profile
