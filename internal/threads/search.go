@@ -15,6 +15,7 @@ import (
 type SearchFilters struct {
 	Author    string // Filter by author username
 	SortBy    string // "top" or "recent" (maps to search_type)
+	Mode      string // "keyword" or "tag" (maps to search_mode)
 	MediaType string // "text", "image", or "video"
 	Since     int64  // Unix timestamp for start of date range
 	Until     int64  // Unix timestamp for end of date range
@@ -67,6 +68,9 @@ func applySearchFilters(params url.Values, f *SearchFilters) {
 	}
 	if f.SortBy != "" {
 		params.Set("search_type", strings.ToUpper(f.SortBy))
+	}
+	if f.Mode != "" {
+		params.Set("search_mode", strings.ToUpper(f.Mode))
 	}
 	if f.MediaType != "" {
 		params.Set("media_type", strings.ToUpper(f.MediaType))
