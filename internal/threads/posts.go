@@ -30,6 +30,13 @@ type PostList struct {
 // defaultFields lists the fields requested when fetching posts.
 var defaultFields = []string{"id", "text", "media_type", "timestamp", "permalink", "username"}
 
+// DefaultPostFields returns a copy of the default fields requested when fetching posts.
+func DefaultPostFields() []string {
+	out := make([]string, len(defaultFields))
+	copy(out, defaultFields)
+	return out
+}
+
 // CreateContainer creates a media container for a post.
 // Returns the container ID on success.
 func CreateContainer(ctx context.Context, client *api.Client, userID, text, mediaType string) (string, error) {
