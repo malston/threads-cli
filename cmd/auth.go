@@ -49,7 +49,7 @@ func runAuthLogin(cmd *cobra.Command, _ []string) error {
 	port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx)
 	defer shutdown()
 
-	redirectURI := fmt.Sprintf("http://localhost:%d/callback", port)
+	redirectURI := fmt.Sprintf("https://localhost:%d/callback", port)
 	authURL := auth.BuildAuthURL(appID, redirectURI, "cli-login", auth.DefaultScopes())
 
 	fmt.Fprintln(cmd.OutOrStdout(), "Open this URL in your browser to authenticate:")

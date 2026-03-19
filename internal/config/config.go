@@ -20,7 +20,7 @@ const configFile = "config.json"
 // LoadAppConfig loads app configuration from environment variables or a JSON file.
 // Environment variables (THREADS_APP_ID, THREADS_APP_SECRET) take precedence.
 // Both must be set for env-based config to be used. When loaded from env,
-// RedirectURI defaults to http://localhost:8888/callback.
+// RedirectURI defaults to https://localhost:8888/callback.
 // Falls back to {dir}/config.json if env vars are not set.
 func LoadAppConfig(dir string) (*AppConfig, error) {
 	appID := os.Getenv("THREADS_APP_ID")
@@ -33,7 +33,7 @@ func LoadAppConfig(dir string) (*AppConfig, error) {
 		return &AppConfig{
 			AppID:       appID,
 			AppSecret:   appSecret,
-			RedirectURI: "http://localhost:8888/callback",
+			RedirectURI: "https://localhost:8888/callback",
 		}, nil
 	}
 

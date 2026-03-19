@@ -2,6 +2,7 @@ package auth_test
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +15,7 @@ import (
 
 func TestBuildAuthURL(t *testing.T) {
 	t.Run("produces correct URL with all params encoded", func(t *testing.T) {
-		got := auth.BuildAuthURL("12345", "http://localhost:8080/callback", "abc123", []string{"threads_basic", "threads_content_publish"})
+		got := auth.BuildAuthURL("12345", "https://localhost:8080/callback", "abc123", []string{"threads_basic", "threads_content_publish"})
 
 		parsed, err := url.Parse(got)
 		if err != nil {
@@ -35,8 +36,8 @@ func TestBuildAuthURL(t *testing.T) {
 		if q.Get("client_id") != "12345" {
 			t.Errorf("client_id = %q, want %q", q.Get("client_id"), "12345")
 		}
-		if q.Get("redirect_uri") != "http://localhost:8080/callback" {
-			t.Errorf("redirect_uri = %q, want %q", q.Get("redirect_uri"), "http://localhost:8080/callback")
+		if q.Get("redirect_uri") != "https://localhost:8080/callback" {
+			t.Errorf("redirect_uri = %q, want %q", q.Get("redirect_uri"), "https://localhost:8080/callback")
 		}
 		if q.Get("response_type") != "code" {
 			t.Errorf("response_type = %q, want %q", q.Get("response_type"), "code")
@@ -50,7 +51,7 @@ func TestBuildAuthURL(t *testing.T) {
 	})
 
 	t.Run("encodes special characters in state param", func(t *testing.T) {
-		got := auth.BuildAuthURL("12345", "http://localhost:8080/callback", "state with spaces&special=chars", []string{"threads_basic"})
+		got := auth.BuildAuthURL("12345", "https://localhost:8080/callback", "state with spaces&special=chars", []string{"threads_basic"})
 
 		parsed, err := url.Parse(got)
 		if err != nil {
@@ -62,6 +63,15 @@ func TestBuildAuthURL(t *testing.T) {
 			t.Errorf("state = %q, want %q", q.Get("state"), "state with spaces&special=chars")
 		}
 	})
+}
+
+// tlsClient returns an HTTP client that trusts self-signed certs.
+func tlsClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 }
 
 func TestStartCallbackServer(t *testing.T) {
@@ -84,8 +94,8 @@ func TestStartCallbackServer(t *testing.T) {
 		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx)
 		defer shutdown()
 
-		callbackURL := fmt.Sprintf("http://localhost:%d/callback?code=test_code%%23_", port)
-		resp, err := http.Get(callbackURL)
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test_code%%23_", port)
+		resp, err := tlsClient().Get(callbackURL)
 		if err != nil {
 			t.Fatalf("GET %s failed: %v", callbackURL, err)
 		}
@@ -120,15 +130,12 @@ func TestStartCallbackServer(t *testing.T) {
 
 		port, _, _, _ := auth.StartCallbackServer(ctx)
 
-		// Cancel context to trigger shutdown
 		cancel()
 
-		// Give server time to shut down
 		time.Sleep(100 * time.Millisecond)
 
-		// Attempt a request -- should fail because the server is shut down
-		callbackURL := fmt.Sprintf("http://localhost:%d/callback?code=test", port)
-		_, err := http.Get(callbackURL)
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test", port)
+		_, err := tlsClient().Get(callbackURL)
 		if err == nil {
 			t.Error("expected error after context cancellation, got nil")
 		}

@@ -23,8 +23,8 @@ func TestLoadAppConfigFromEnvVars(t *testing.T) {
 	if cfg.AppSecret != "env-app-secret" {
 		t.Errorf("AppSecret = %q, want %q", cfg.AppSecret, "env-app-secret")
 	}
-	if cfg.RedirectURI != "http://localhost:8888/callback" {
-		t.Errorf("RedirectURI = %q, want %q", cfg.RedirectURI, "http://localhost:8888/callback")
+	if cfg.RedirectURI != "https://localhost:8888/callback" {
+		t.Errorf("RedirectURI = %q, want %q", cfg.RedirectURI, "https://localhost:8888/callback")
 	}
 }
 
@@ -148,7 +148,7 @@ func TestSaveAppConfigCreatesDirectory(t *testing.T) {
 	cfg := &AppConfig{
 		AppID:       "test-id",
 		AppSecret:   "test-secret",
-		RedirectURI: "http://localhost:8888/callback",
+		RedirectURI: "https://localhost:8888/callback",
 	}
 
 	if err := SaveAppConfig(nested, cfg); err != nil {
