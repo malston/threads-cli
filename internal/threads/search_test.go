@@ -1,0 +1,172 @@
+package threads
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"testing"
+
+	"github.com/malston/saved-threads/internal/api"
+)
+
+func TestSearchSendsCorrectRequest(t *testing.T) {
+	var gotMethod, gotPath string
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotMethod = r.Method
+		gotPath = r.URL.Path
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	_, err := Search(context.Background(), client, "golang", nil)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotMethod != http.MethodGet {
+		t.Errorf("method = %q, want %q", gotMethod, http.MethodGet)
+	}
+	if gotPath != "/keyword_search" {
+		t.Errorf("path = %q, want %q", gotPath, "/keyword_search")
+	}
+	if gotQuery.Get("q") != "golang" {
+		t.Errorf("q = %q, want %q", gotQuery.Get("q"), "golang")
+	}
+	if gotQuery.Get("fields") == "" {
+		t.Error("fields param missing")
+	}
+}
+
+func TestSearchAppliesPagination(t *testing.T) {
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	page := &api.PageParams{Limit: 25, After: "cursor-abc"}
+	_, err := Search(context.Background(), client, "test", page)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotQuery.Get("limit") != "25" {
+		t.Errorf("limit = %q, want %q", gotQuery.Get("limit"), "25")
+	}
+	if gotQuery.Get("after") != "cursor-abc" {
+		t.Errorf("after = %q, want %q", gotQuery.Get("after"), "cursor-abc")
+	}
+}
+
+func TestSearchParsesPostListWithPaging(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{
+				{"id": "s1", "text": "search result one", "username": "alice"},
+				{"id": "s2", "text": "search result two", "username": "bob"},
+			},
+			"paging": map[string]any{
+				"cursors": map[string]any{
+					"before": "cur-b",
+					"after":  "cur-a",
+				},
+				"next": "https://graph.threads.net/keyword_search?after=cur-a",
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	list, err := Search(context.Background(), client, "result", nil)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if len(list.Data) != 2 {
+		t.Fatalf("len(Data) = %d, want 2", len(list.Data))
+	}
+	if list.Data[0].ID != "s1" {
+		t.Errorf("Data[0].ID = %q, want %q", list.Data[0].ID, "s1")
+	}
+	if list.Data[0].Text != "search result one" {
+		t.Errorf("Data[0].Text = %q, want %q", list.Data[0].Text, "search result one")
+	}
+	if list.Data[0].Username != "alice" {
+		t.Errorf("Data[0].Username = %q, want %q", list.Data[0].Username, "alice")
+	}
+	if list.Data[1].ID != "s2" {
+		t.Errorf("Data[1].ID = %q, want %q", list.Data[1].ID, "s2")
+	}
+
+	if list.Paging == nil {
+		t.Fatal("Paging is nil")
+	}
+	if list.Paging.Before != "cur-b" {
+		t.Errorf("Paging.Before = %q, want %q", list.Paging.Before, "cur-b")
+	}
+	if list.Paging.After != "cur-a" {
+		t.Errorf("Paging.After = %q, want %q", list.Paging.After, "cur-a")
+	}
+	if !list.Paging.HasNext() {
+		t.Error("Paging.HasNext() = false, want true")
+	}
+}
+
+func TestSearchReturnsErrorOnNon200(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{
+			"error": map[string]any{
+				"message": "invalid query",
+				"type":    "OAuthException",
+				"code":    100,
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	_, err := Search(context.Background(), client, "bad", nil)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestSearchWithEmptyQuery(t *testing.T) {
+	var gotQuery url.Values
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotQuery = r.URL.Query()
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]string{},
+		})
+	}))
+	defer srv.Close()
+
+	client := api.NewClientWithHTTP("tok", srv.URL, srv.Client())
+	_, err := Search(context.Background(), client, "", nil)
+	if err != nil {
+		t.Fatalf("Search returned error: %v", err)
+	}
+
+	if gotQuery.Get("q") != "" {
+		t.Errorf("q = %q, want empty string", gotQuery.Get("q"))
+	}
+}

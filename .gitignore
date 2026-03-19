@@ -1,4 +1,4 @@
-threads
+/threads
 *.exe
 .env
 credentials.json
