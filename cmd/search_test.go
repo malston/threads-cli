@@ -122,6 +122,7 @@ func TestSearchAppliesPaginationFlags(t *testing.T) {
 }
 
 func TestSearchFilterFlagsWiredToRequest(t *testing.T) {
+	t.Cleanup(resetSearchFlags)
 	var gotQuery url.Values
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
