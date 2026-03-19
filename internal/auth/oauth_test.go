@@ -79,7 +79,7 @@ func TestStartCallbackServer(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		port, _, _, shutdown := auth.StartCallbackServer(ctx)
+		port, _, _, shutdown := auth.StartCallbackServer(ctx, 0)
 		defer shutdown()
 
 		if port <= 0 {
@@ -91,7 +91,7 @@ func TestStartCallbackServer(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx)
+		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0)
 		defer shutdown()
 
 		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test_code%%23_", port)
@@ -128,7 +128,7 @@ func TestStartCallbackServer(t *testing.T) {
 	t.Run("context cancellation shuts down server", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		port, _, _, _ := auth.StartCallbackServer(ctx)
+		port, _, _, _ := auth.StartCallbackServer(ctx, 0)
 
 		cancel()
 

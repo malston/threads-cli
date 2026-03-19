@@ -35,7 +35,7 @@ func BuildAuthURL(appID, redirectURI, state string, scopes []string) string {
 // the OAuth callback. Threads requires https redirect URIs. A self-signed
 // certificate is generated for localhost. It returns the port, a channel that
 // receives the authorization code, a channel for errors, and a shutdown function.
-func StartCallbackServer(ctx context.Context) (port int, codeChan <-chan string, errChan <-chan error, shutdown func()) {
+func StartCallbackServer(ctx context.Context, listenPort int) (port int, codeChan <-chan string, errChan <-chan error, shutdown func()) {
 	code := make(chan string, 1)
 	errs := make(chan error, 1)
 
@@ -45,7 +45,7 @@ func StartCallbackServer(ctx context.Context) (port int, codeChan <-chan string,
 		return 0, code, errs, func() {}
 	}
 
-	listener, err := tls.Listen("tcp", ":0", &tls.Config{
+	listener, err := tls.Listen("tcp", fmt.Sprintf(":%d", listenPort), &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 	})
 	if err != nil {

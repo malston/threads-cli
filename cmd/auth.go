@@ -24,6 +24,7 @@ func init() {
 		Short: "Authenticate with Threads",
 		RunE:  runAuthLogin,
 	}
+	loginCmd.Flags().Int("port", 0, "local HTTPS port for OAuth callback (0 = random)")
 
 	tokenCmd := &cobra.Command{
 		Use:   "token",
@@ -46,7 +47,8 @@ func runAuthLogin(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 	defer cancel()
 
-	port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx)
+	listenPort, _ := cmd.Flags().GetInt("port")
+	port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, listenPort)
 	defer shutdown()
 
 	redirectURI := fmt.Sprintf("https://localhost:%d/callback", port)
