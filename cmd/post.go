@@ -219,18 +219,9 @@ func runPostRepost(cmd *cobra.Command, args []string) error {
 
 // loadPostClient creates an API client pointing at apiBaseURL.
 func loadPostClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		// Fall through to the standard loadClient which checks env and config.
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		// If apiBaseURL has been overridden (tests), rebuild with that URL.
-		if apiBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, apiBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if apiBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, apiBaseURL, &http.Client{}), nil

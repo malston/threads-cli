@@ -35,7 +35,7 @@ func BuildAuthURL(appID, redirectURI, state string, scopes []string) string {
 // the OAuth callback. Threads requires https redirect URIs. A self-signed
 // certificate is generated for localhost. It returns the port, a channel that
 // receives the authorization code, a channel for errors, and a shutdown function.
-func StartCallbackServer(ctx context.Context, listenPort int) (port int, codeChan <-chan string, errChan <-chan error, shutdown func()) {
+func StartCallbackServer(ctx context.Context, listenPort int, expectedState string) (port int, codeChan <-chan string, errChan <-chan error, shutdown func()) {
 	code := make(chan string, 1)
 	errs := make(chan error, 1)
 
@@ -57,6 +57,15 @@ func StartCallbackServer(ctx context.Context, listenPort int) (port int, codeCha
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+		state := r.URL.Query().Get("state")
+		if state != expectedState {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "<html><body><h1>Authorization failed: invalid state parameter.</h1></body></html>")
+			errs <- fmt.Errorf("OAuth state mismatch: got %q, want %q", state, expectedState)
+			return
+		}
+
 		authCode := r.URL.Query().Get("code")
 		authCode = strings.TrimSuffix(authCode, "#_")
 

@@ -55,16 +55,9 @@ func runProfile(cmd *cobra.Command, args []string) error {
 
 // loadProfileClient creates an API client pointing at profileBaseURL.
 func loadProfileClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		if profileBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, profileBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if profileBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, profileBaseURL, &http.Client{}), nil

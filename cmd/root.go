@@ -43,26 +43,36 @@ func Execute() {
 	}
 }
 
-// loadClient creates an API client using the first available token source:
+// resolveToken returns the access token from the first available source:
 // --token flag, THREADS_ACCESS_TOKEN env var, or stored credentials.
-func loadClient(cmd *cobra.Command) (*api.Client, error) {
+func resolveToken(cmd *cobra.Command) (string, error) {
 	token, _ := cmd.Flags().GetString("token")
 	if token != "" {
-		return api.NewClient(token), nil
+		return token, nil
 	}
 
 	token = os.Getenv("THREADS_ACCESS_TOKEN")
 	if token != "" {
-		return api.NewClient(token), nil
+		return token, nil
 	}
 
 	store := config.NewStore(configDir)
 	creds, err := store.Load()
 	if err == nil && creds.AccessToken != "" {
-		return api.NewClient(creds.AccessToken), nil
+		return creds.AccessToken, nil
 	}
 
-	return nil, fmt.Errorf("no access token: set --token, THREADS_ACCESS_TOKEN, or run 'threads auth login'")
+	return "", fmt.Errorf("no access token: set --token, THREADS_ACCESS_TOKEN, or run 'threads auth login'")
+}
+
+// loadClient creates an API client using the first available token source:
+// --token flag, THREADS_ACCESS_TOKEN env var, or stored credentials.
+func loadClient(cmd *cobra.Command) (*api.Client, error) {
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
+	}
+	return api.NewClient(token), nil
 }
 
 // getFormat reads the --format flag and parses it into an output.Format.

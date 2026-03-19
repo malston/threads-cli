@@ -56,16 +56,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 // loadSearchClient creates an API client pointing at searchBaseURL.
 func loadSearchClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		if searchBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, searchBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if searchBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, searchBaseURL, &http.Client{}), nil

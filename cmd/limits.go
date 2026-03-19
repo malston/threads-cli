@@ -46,16 +46,9 @@ func runLimits(cmd *cobra.Command, _ []string) error {
 
 // loadLimitsClient creates an API client pointing at limitsBaseURL.
 func loadLimitsClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		if limitsBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, limitsBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if limitsBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, limitsBaseURL, &http.Client{}), nil

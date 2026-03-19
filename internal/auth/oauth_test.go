@@ -79,7 +79,7 @@ func TestStartCallbackServer(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		port, _, _, shutdown := auth.StartCallbackServer(ctx, 0)
+		port, _, _, shutdown := auth.StartCallbackServer(ctx, 0, "test-state")
 		defer shutdown()
 
 		if port <= 0 {
@@ -91,10 +91,10 @@ func TestStartCallbackServer(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0)
+		port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, 0, "test-state")
 		defer shutdown()
 
-		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test_code%%23_", port)
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test_code%%23_&state=test-state", port)
 		resp, err := tlsClient().Get(callbackURL)
 		if err != nil {
 			t.Fatalf("GET %s failed: %v", callbackURL, err)
@@ -128,13 +128,13 @@ func TestStartCallbackServer(t *testing.T) {
 	t.Run("context cancellation shuts down server", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		port, _, _, _ := auth.StartCallbackServer(ctx, 0)
+		port, _, _, _ := auth.StartCallbackServer(ctx, 0, "test-state")
 
 		cancel()
 
 		time.Sleep(100 * time.Millisecond)
 
-		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test", port)
+		callbackURL := fmt.Sprintf("https://localhost:%d/callback?code=test&state=test-state", port)
 		_, err := tlsClient().Get(callbackURL)
 		if err == nil {
 			t.Error("expected error after context cancellation, got nil")

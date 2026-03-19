@@ -84,16 +84,9 @@ func runInsightsUser(cmd *cobra.Command, _ []string) error {
 
 // loadInsightsClient creates an API client pointing at insightsBaseURL.
 func loadInsightsClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		if insightsBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, insightsBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if insightsBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, insightsBaseURL, &http.Client{}), nil

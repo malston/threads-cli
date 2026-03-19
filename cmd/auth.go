@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
@@ -47,12 +49,18 @@ func runAuthLogin(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Minute)
 	defer cancel()
 
+	stateBytes := make([]byte, 16)
+	if _, err := rand.Read(stateBytes); err != nil {
+		return fmt.Errorf("generating state: %w", err)
+	}
+	state := hex.EncodeToString(stateBytes)
+
 	listenPort, _ := cmd.Flags().GetInt("port")
-	port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, listenPort)
+	port, codeChan, errChan, shutdown := auth.StartCallbackServer(ctx, listenPort, state)
 	defer shutdown()
 
 	redirectURI := fmt.Sprintf("https://localhost:%d/callback", port)
-	authURL := auth.BuildAuthURL(appID, redirectURI, "cli-login", auth.DefaultScopes())
+	authURL := auth.BuildAuthURL(appID, redirectURI, state, auth.DefaultScopes())
 
 	fmt.Fprintln(cmd.OutOrStdout(), "Open this URL in your browser to authenticate:")
 	fmt.Fprintln(cmd.OutOrStdout())

@@ -104,7 +104,11 @@ func CheckStatus(ctx context.Context, client *api.Client, containerID string) (s
 // WaitForReady polls CheckStatus until the container reaches FINISHED status.
 // Returns an error if the container reaches ERROR status or the timeout elapses.
 func WaitForReady(ctx context.Context, client *api.Client, containerID string, pollInterval, timeout time.Duration) error {
-	deadline := time.After(timeout)
+	deadline := time.NewTimer(timeout)
+	defer deadline.Stop()
+
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
 
 	for {
 		status, err := CheckStatus(ctx, client, containerID)
@@ -116,16 +120,15 @@ func WaitForReady(ctx context.Context, client *api.Client, containerID string, p
 		case "FINISHED":
 			return nil
 		case "ERROR":
-			// Fetch the error message by re-checking with full response parsing.
 			return fetchContainerError(ctx, client, containerID)
 		}
 
 		select {
-		case <-deadline:
+		case <-deadline.C:
 			return fmt.Errorf("timed out waiting for container %s", containerID)
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(pollInterval):
+		case <-ticker.C:
 		}
 	}
 }
@@ -141,12 +144,16 @@ func fetchContainerError(ctx context.Context, client *api.Client, containerID st
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return api.ParseError(resp)
+	}
+
 	var result struct {
 		Status       string `json:"status"`
 		ErrorMessage string `json:"error_message"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return fmt.Errorf("container error: unknown")
+		return fmt.Errorf("container error (decode failed: %w)", err)
 	}
 
 	if result.ErrorMessage != "" {

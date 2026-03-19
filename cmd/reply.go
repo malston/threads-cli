@@ -139,16 +139,9 @@ func runReplyUnhide(cmd *cobra.Command, args []string) error {
 
 // loadReplyClient creates an API client pointing at replyBaseURL.
 func loadReplyClient(cmd *cobra.Command) (*api.Client, error) {
-	token, _ := cmd.Flags().GetString("token")
-	if token == "" {
-		client, err := loadClient(cmd)
-		if err != nil {
-			return nil, err
-		}
-		if replyBaseURL != "https://graph.threads.net" {
-			return api.NewClientWithHTTP(token, replyBaseURL, &http.Client{}), nil
-		}
-		return client, nil
+	token, err := resolveToken(cmd)
+	if err != nil {
+		return nil, err
 	}
 	if replyBaseURL != "https://graph.threads.net" {
 		return api.NewClientWithHTTP(token, replyBaseURL, &http.Client{}), nil

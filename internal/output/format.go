@@ -72,6 +72,9 @@ func printText(w io.Writer, data any) error {
 }
 
 func printTextMap(w io.Writer, v reflect.Value) error {
+	if v.Type().Key().Kind() != reflect.String {
+		return fmt.Errorf("unsupported map key type: %s", v.Type().Key())
+	}
 	keys := make([]string, 0, v.Len())
 	for _, k := range v.MapKeys() {
 		keys = append(keys, k.String())
@@ -167,10 +170,14 @@ func printTableStructs(w io.Writer, v reflect.Value) error {
 }
 
 func printTableMaps(w io.Writer, v reflect.Value) error {
+	firstMap := v.Index(0)
+	if firstMap.Type().Key().Kind() != reflect.String {
+		return fmt.Errorf("unsupported map key type: %s", firstMap.Type().Key())
+	}
+
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
 
 	// Collect headers from the first map's keys
-	firstMap := v.Index(0)
 	headers := make([]string, 0, firstMap.Len())
 	for _, k := range firstMap.MapKeys() {
 		headers = append(headers, k.String())
