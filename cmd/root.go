@@ -22,6 +22,13 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "threads",
 	Short: "CLI for the Meta Threads API",
+	Long: `CLI wrapper for the Meta Threads API.
+
+Manage posts, replies, profiles, insights, and rate limits
+from the command line. Authenticate via OAuth, then use
+subcommands to interact with your Threads account.
+
+Token resolution order: --token flag > THREADS_ACCESS_TOKEN env > stored credentials.`,
 }
 
 func init() {
