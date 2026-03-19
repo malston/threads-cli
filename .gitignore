@@ -1,0 +1,4 @@
+/threads
+*.exe
+.env
+credentials.json
