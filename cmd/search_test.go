@@ -20,6 +20,7 @@ func TestSearchCommandRegistered(t *testing.T) {
 }
 
 func TestSearchSendsCorrectRequest(t *testing.T) {
+	t.Cleanup(resetSearchFlags)
 	response := map[string]any{
 		"data": []map[string]string{
 			{"id": "s-1", "text": "found it", "media_type": "TEXT", "username": "alice"},
@@ -74,6 +75,7 @@ func TestSearchSendsCorrectRequest(t *testing.T) {
 }
 
 func TestSearchAppliesPaginationFlags(t *testing.T) {
+	t.Cleanup(resetSearchFlags)
 	response := map[string]any{
 		"data": []map[string]string{},
 	}
