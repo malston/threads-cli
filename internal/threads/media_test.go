@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 func TestCreateImageContainer(t *testing.T) {

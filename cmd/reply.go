@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/malston/saved-threads/internal/api"
-	"github.com/malston/saved-threads/internal/output"
-	"github.com/malston/saved-threads/internal/threads"
+	"github.com/malston/threads-cli/internal/api"
+	"github.com/malston/threads-cli/internal/output"
+	"github.com/malston/threads-cli/internal/threads"
 	"github.com/spf13/cobra"
 )
 

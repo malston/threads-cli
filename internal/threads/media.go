@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 // CreateImageContainer creates a media container for an image post.

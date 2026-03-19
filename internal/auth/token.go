@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/malston/saved-threads/internal/config"
+	"github.com/malston/threads-cli/internal/config"
 )
 
 // exchangeCodeResponse represents the JSON returned by the short-lived token endpoint.

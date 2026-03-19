@@ -1,4 +1,4 @@
-module github.com/malston/saved-threads
+module github.com/malston/threads-cli
 
 go 1.25.5
 

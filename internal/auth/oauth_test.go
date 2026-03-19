@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/malston/saved-threads/internal/auth"
+	"github.com/malston/threads-cli/internal/auth"
 )
 
 func TestBuildAuthURL(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 // MetricValue holds a single data point for a metric.

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/malston/saved-threads/internal/config"
-	"github.com/malston/saved-threads/internal/output"
+	"github.com/malston/threads-cli/internal/config"
+	"github.com/malston/threads-cli/internal/output"
 	"github.com/spf13/cobra"
 )
 

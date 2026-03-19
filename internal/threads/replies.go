@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 // ListReplies fetches a page of replies for a given post.

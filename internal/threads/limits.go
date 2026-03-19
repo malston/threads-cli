@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 // QuotaUsage represents a single rate limit quota entry.

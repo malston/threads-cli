@@ -1,18 +1,18 @@
-# saved-threads
+# threads-cli
 
 CLI wrapper for the Meta Threads API.
 
 ## Installation
 
 ```bash
-go install github.com/malston/saved-threads@latest
+go install github.com/malston/threads-cli@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/malston/saved-threads.git
-cd saved-threads
+git clone https://github.com/malston/threads-cli.git
+cd threads-cli
 make install
 ```
 

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 // Search finds posts matching a keyword query.

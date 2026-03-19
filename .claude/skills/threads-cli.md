@@ -1,9 +1,9 @@
 ---
-name: saved-threads
+name: threads-cli
 description: Use the `threads` CLI to interact with the Meta Threads API -- post, search, manage replies, view insights
 ---
 
-# saved-threads CLI
+# threads-cli CLI
 
 A CLI wrapper for the Meta Threads API. Binary name: `threads`.
 
@@ -20,7 +20,7 @@ A CLI wrapper for the Meta Threads API. Binary name: `threads`.
 ### Build
 
 ```bash
-cd /Users/markalston/code/saved-threads
+cd /Users/markalston/code/threads-cli
 make build    # produces ./threads binary
 make install  # installs to GOPATH/bin
 ```
@@ -95,9 +95,9 @@ threads limits    # Show current rate limit usage
 
 1. `--token` flag
 2. `THREADS_ACCESS_TOKEN` environment variable
-3. Stored credentials from `~/.saved-threads/credentials.json`
+3. Stored credentials from `~/.threads-cli/credentials.json`
 
 ## Config Files
 
-- `~/.saved-threads/credentials.json` - Stored OAuth tokens
-- `~/.saved-threads/config.json` - App configuration (optional, env vars preferred)
+- `~/.threads-cli/credentials.json` - Stored OAuth tokens
+- `~/.threads-cli/config.json` - App configuration (optional, env vars preferred)

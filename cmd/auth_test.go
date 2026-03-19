@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/malston/saved-threads/internal/config"
+	"github.com/malston/threads-cli/internal/config"
 )
 
 func TestAuthCommandRegistered(t *testing.T) {

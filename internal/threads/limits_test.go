@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/malston/saved-threads/internal/api"
+	"github.com/malston/threads-cli/internal/api"
 )
 
 func TestGetLimits(t *testing.T) {

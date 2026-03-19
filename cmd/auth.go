@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/malston/saved-threads/internal/auth"
-	"github.com/malston/saved-threads/internal/config"
+	"github.com/malston/threads-cli/internal/auth"
+	"github.com/malston/threads-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 

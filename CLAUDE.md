@@ -1,4 +1,4 @@
-# saved-threads
+# threads-cli
 
 CLI wrapper for the Meta Threads API.
 

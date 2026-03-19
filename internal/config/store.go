@@ -23,13 +23,13 @@ type Store struct {
 
 const credentialsFile = "credentials.json"
 
-// DefaultConfigDir returns the default configuration directory (~/.saved-threads).
+// DefaultConfigDir returns the default configuration directory (~/.threads-cli).
 func DefaultConfigDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(".", ".saved-threads")
+		return filepath.Join(".", ".threads-cli")
 	}
-	return filepath.Join(home, ".saved-threads")
+	return filepath.Join(home, ".threads-cli")
 }
 
 // NewStore creates a Store that manages credentials in the given directory.
